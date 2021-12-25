@@ -1,0 +1,87 @@
+schemaVersion: 2.1.0
+metadata:
+  name: spring-boot-http-booster
+components:
+  - name: tools
+    container:
+      image: registry.redhat.io/codeready-workspaces/plugin-java8-rhel8
+      env:
+        - name: JAVA_OPTS
+          value: "-XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+            -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90
+            -Dsun.zip.disableMemoryMapping=true -Xms20m -Djava.security.egd=file:/dev/./urandom
+            -Duser.home=/home/jboss"
+        - name: MAVEN_OPTS
+          value: $(JAVA_OPTS)
+      memoryLimit: 3Gi
+      endpoints:
+        - exposure: public
+          name: http-booster
+          protocol: http
+          targetPort: 8080
+        - exposure: internal
+          name: debug
+          protocol: http
+          targetPort: 5005
+      volumeMounts:
+        - name: m2
+          path: /home/jboss/.m2
+        - name: gradle
+          path: /home/jboss/.gradle
+  - name: m2
+    volume:
+      size: 1G
+  - name: gradle
+    volume:
+      size: 1G
+commands:
+  - id: build
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/rest-http-example
+      commandLine: >-
+          MAVEN_OPTS="-Xmx200m" && mvn -Duser.home=${HOME} -DskipTests clean
+          install
+      group:
+        kind: build
+  - id: run
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/rest-http-example
+      commandLine: MAVEN_OPTS="-Xmx200m" && mvn -Duser.home=${HOME} spring-boot:run
+      group:
+        kind: run
+  - id: run-in-debug
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/rest-http-example
+      commandLine: >-
+          mvn  -Duser.home=${HOME} spring-boot:run -Dspring-boot.run.jvmArguments="-Xdebug
+          -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
+      group:
+        kind: run
+  - id: run-tests
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/rest-http-example
+      commandLine: MAVEN_OPTS="-Xmx200m" && mvn -Duser.home=${HOME} verify
+      group:
+        kind: test
+  - id: log-into-cluster
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/rest-http-example
+      commandLine: |
+          echo
+          echo "Before you can deploy this application to an openshift cluster,"
+          echo "you must run 'oc login ...' in the tools terminal."
+          echo
+      group:
+        kind: run
+  - id: deploy-to-openshift
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/rest-http-example
+      commandLine: mvn fabric8:deploy -Popenshift -DskipTests
+      group:
+        kind: run
