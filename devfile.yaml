@@ -39,16 +39,14 @@ commands:
     exec:
       component: tools
       workingDir: ${PROJECTS_ROOT}/rest-http-example
-      commandLine: >-
-          MAVEN_OPTS="-Xmx200m" && mvn -Duser.home=${HOME} -DskipTests clean
-          install
+      commandLine: mvn -DskipTests clean install
       group:
         kind: build
   - id: run
     exec:
       component: tools
       workingDir: ${PROJECTS_ROOT}/rest-http-example
-      commandLine: MAVEN_OPTS="-Xmx200m" && mvn -Duser.home=${HOME} spring-boot:run
+      commandLine: mvn spring-boot:run
       group:
         kind: run
   - id: run-in-debug
@@ -56,7 +54,7 @@ commands:
       component: tools
       workingDir: ${PROJECTS_ROOT}/rest-http-example
       commandLine: >-
-          mvn  -Duser.home=${HOME} spring-boot:run -Dspring-boot.run.jvmArguments="-Xdebug
+          mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Xdebug
           -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
       group:
         kind: run
@@ -64,7 +62,7 @@ commands:
     exec:
       component: tools
       workingDir: ${PROJECTS_ROOT}/rest-http-example
-      commandLine: MAVEN_OPTS="-Xmx200m" && mvn -Duser.home=${HOME} verify
+      commandLine: mvn verify
       group:
         kind: test
   - id: log-into-cluster
